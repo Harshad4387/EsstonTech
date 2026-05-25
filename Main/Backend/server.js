@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true, limit
 app.use(morgan('dev'));
 
 app.get('/', (req,res)=>{
-    res.status(200).json('server is running fine');
+    res.status(200).json('server is running fine this is the main server');
     console.log("yes done");
     
 })
@@ -39,10 +39,18 @@ const sales = require("./routes/Sales/product.route")
 app.use("/api/sales" , sales );
 
 const common = require("./routes/common/common.route");
+
 app.use("/api/common" , common);
-const port = process.env.PORT;
+
+
+const account_dealer = require("./routes/Account/Dealer.route");
+app.use("/api/account/dealer" , account_dealer);
+
+const account_order = require("./routes/Account/Order.route");
+app.use("/api/account/order" , account_order);
+const port = process.env.PORT ;
 app.listen(port, ()=>{
-    console.log('server is running on port 3000 ~ built by harshu');
+    console.log('server is running on port 3001 ~ built by harshu');
 })
 //https://fc3thch8-3000.inc1.devtunnels.ms/
 //https://fc3thch8-3000.inc1.devtunnels.ms/

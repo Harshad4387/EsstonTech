@@ -5,6 +5,7 @@ const {getAllRawMaterials,InwardRawMaterial,getRawMaterialsByCategory} = require
 const {verifyjwt} = require("../../Middleware/auth.middleware");
 
 router.post("/inward", verifyjwt, InwardRawMaterial);
-router.get("/getRawmaterial" , verifyjwt ,getAllRawMaterials );
+// router.get("/getRawmaterial" , verifyjwt ,getAllRawMaterials );
+router.get("/getRawmaterial"  ,getAllRawMaterials );
 router.get("/category/:category", getRawMaterialsByCategory);
 module.exports = router;
