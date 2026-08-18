@@ -19,7 +19,7 @@ app.get('/', (req,res)=>{
     
 })
 const auth = require("./routes/auth/auth.route");
-app.use('api/auth',auth);
+app.use('/api/auth',auth);
 
 
 
