@@ -9,7 +9,7 @@ const productionRequestSchema = new mongoose.Schema({
   requestedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User", 
-    required: true
+    // required: true
   },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,

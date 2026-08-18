@@ -72,4 +72,6 @@ const getAllProductionWorkers = async (req, res) => {
   }
 };
 
+// add  new production worker 
+
 module.exports = {getAllRawMaterials , getAllProducts , getAllProductionWorkers};

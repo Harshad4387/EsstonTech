@@ -2,24 +2,29 @@ require('dotenv').config();
 const express = require("express");
 const app = express();
 const morgan = require('morgan');
-const connect = require("./db/db");
+const connectMainDB = require("./db/main_db");
 const cors = require('cors');
-connect();
+connectMainDB();
 app.use(cors());
+const mongoose = require('mongoose');
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit
     : "50mb" }));
-
 app.use(morgan('dev'));
 
 app.get('/', (req,res)=>{
+  
     res.status(200).json('server is running fine this is the main server');
-    console.log("yes done");
     
 })
 const auth = require("./routes/auth/auth.route");
-app.use('/api/auth',auth);
+app.use('api/auth',auth);
+
+
+
+const main_system = require("./routes/Main_System/main_system_route");
+app.use("/api/main-system" , main_system);
 
 const store_rawMaterial = require("./routes/store/RawMaterial.route");
 const store_Product = require("./routes/store/Product.route");
@@ -41,7 +46,6 @@ app.use("/api/sales" , sales );
 const common = require("./routes/common/common.route");
 
 app.use("/api/common" , common);
-
 
 const account_dealer = require("./routes/Account/Dealer.route");
 app.use("/api/account/dealer" , account_dealer);

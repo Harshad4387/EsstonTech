@@ -26,13 +26,10 @@ const orderSchema = new mongoose.Schema({
       required: true
     },
 
-    // ✅ Already available in stock
     readyQuantity: {
       type: Number,
       default: 0
     },
-
-    // ✅ Need manufacturing
     manufacturingQuantity: {
       type: Number,
       default: 0
@@ -95,7 +92,9 @@ const orderSchema = new mongoose.Schema({
       "pending",
       "approved",
       "unapproved",
-      "manufacturing"
+      "manufacturing",
+      "completed",
+      "delivered"
     ],
     default: "pending"
   },

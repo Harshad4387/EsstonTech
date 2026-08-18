@@ -1,7 +1,7 @@
 const Order = require("../../models/Order.Model");
 const Product = require("../../models/Product.model");
 const ProductionRequest = require("../../models/Request");
-const Raw = require("../../models/RawMaterial.model");
+const RawMaterial = require("../../models/RawMaterial.model");
 const puppeteer = require("puppeteer-core");
 
 const createOrder = async (req, res) => {
@@ -146,6 +146,7 @@ const getcreatedorders = async (req, res) => {
     })
       .populate("dealer")
       .populate("products.product")
+      .populate("rawMaterials.rawMaterial")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -210,7 +211,7 @@ const approveOrder = async (req, res) => {
 
         const newRequest = new ProductionRequest({
           product: item.product,
-          requestedBy: req.user.id,
+          // requestedBy: req.user.id,
           quantity: manufacturingQty,
           status: "pending"
         });
@@ -752,6 +753,171 @@ const generateQuotationPdf = async (req, res) => {
 };
 
 
+const getOrdersCurrentStatus = async (req, res) => {
+  try {
+
+    const orders = await Order.find()
+
+      .populate("dealer")
+
+      .populate("products.product")
+
+      .populate("products.productionRequest")
+
+      .sort({ createdAt: -1 });
+
+    const updatedOrders = [];
+
+    for (const order of orders) {
+
+      let hasManufacturing = false;
+
+      let allCompleted = true;
+
+      let allReceived = true;
+
+      // Product response
+      const productsResponse = [];
+
+      for (const item of order.products) {
+
+        let productCurrentStatus = "ready";
+
+        if (item.productionRequest) {
+
+          const requestStatus =
+            item.productionRequest.status;
+
+          productCurrentStatus = requestStatus;
+
+          // Manufacturing states
+          if (
+            requestStatus === "accepted" ||
+            requestStatus === "materials_collected" ||
+            requestStatus === "in_progress"
+          ) {
+
+            hasManufacturing = true;
+          }
+
+          // Not completed yet
+          if (
+            requestStatus !== "completed" &&
+            requestStatus !== "received"
+          ) {
+
+            allCompleted = false;
+          }
+
+          // Not delivered yet
+          if (requestStatus !== "received") {
+
+            allReceived = false;
+          }
+        }
+
+        productsResponse.push({
+
+          product: {
+            _id: item.product?._id,
+            name: item.product?.name
+          },
+
+          quantity: item.quantity,
+
+          readyQuantity:
+            item.readyQuantity,
+
+          manufacturingQuantity:
+            item.manufacturingQuantity,
+
+          currentStatus:
+            productCurrentStatus,
+
+          price: item.price,
+
+          discount: item.discount,
+
+          totalAmount:
+            item.totalAmount
+        });
+      }
+
+      // Update order status
+      if (allReceived) {
+
+        order.status = "delivered";
+      }
+
+      else if (allCompleted) {
+
+        order.status = "completed";
+      }
+
+      else if (hasManufacturing) {
+
+        order.status = "manufacturing";
+      }
+
+      else {
+
+        order.status = "approved";
+      }
+
+      await order.save();
+
+      updatedOrders.push({
+
+        _id: order._id,
+
+        status: order.status,
+
+        dealer: {
+          _id: order.dealer?._id,
+          name: order.dealer?.name
+        },
+
+        products: productsResponse,
+
+        grandTotal: order.grandTotal,
+
+        remarks: order.remarks,
+
+        orderDate: order.orderDate,
+
+        compleletion_date:
+          order.compleletion_date,
+
+        arrival_date:
+          order.arrival_date
+
+      });
+    }
+
+    res.status(200).json({
+
+      success: true,
+
+      count: updatedOrders.length,
+
+      orders: updatedOrders
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: "Server Error",
+
+      error: error.message
+
+    });
+
+  }
+};
 
 
 module.exports = {
@@ -761,5 +927,6 @@ module.exports = {
   approveOrder,
   deleteOrder,
   editOrder,
-  generateQuotationPdf
+  generateQuotationPdf,
+  getOrdersCurrentStatus
 };

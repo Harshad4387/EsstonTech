@@ -116,16 +116,10 @@ const acceptRequest = async (req, res) => {
 const getALLacceptedByWoker = async (req, res) => {
   try {
     const userId = req.user.id; 
-
-    
     const acceptedRequests = await ProductionRequest.find({
       assignedTo: userId,
       status: "accepted",
-    })
-      .populate({ path: "product", select: "name" })
-      .populate({ path: "requestedBy", select: "name email" })
-      .sort({ startedAt: -1 });
-
+    }).populate({ path: "product", select: "name" }).populate({ path: "requestedBy", select: "name email" }).sort({ startedAt: -1 });
     if (!acceptedRequests || acceptedRequests.length === 0) {
       return res.status(200).json({
         success: false,
@@ -133,7 +127,6 @@ const getALLacceptedByWoker = async (req, res) => {
       });
     }
 
-    // ✅ Simplified response
     const formattedData = acceptedRequests.map((reqDoc) => ({
       id: reqDoc._id,
       product: reqDoc.product ? reqDoc.product.name : "N/A",
@@ -193,6 +186,7 @@ const MyWork = async (req, res) => {
       startedAt: reqDoc.startedAt,
       updatedAt: reqDoc.updatedAt,
     }));
+  
 
     // ✅ Send response
     res.status(200).json({

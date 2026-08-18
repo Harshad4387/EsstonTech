@@ -2,6 +2,10 @@ const User = require("../../models/user.model");
 const bcrypt = require("bcryptjs");
 const generatejwt = require("../../utils/generatetoken");
 
+const Company = require("../../models/main_system/company_model");
+
+const getTenantConnection = require("../../db/tenantDB");
+
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -45,40 +49,87 @@ const loginUser = async (req, res) => {
 
 
 const registerUser = async (req, res) => {
+
   try {
-    const { name, email, password } = req.body;
-    const role = "sales";  
-    
-    if (!name ||  !email || !password) {
+
+    const {
+      name,
+      email,
+      password,
+      role,
+      companyEmail
+    } = req.body;
+
+    // Validation
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !companyEmail
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required fields (name, role, email, password).",
+        message:
+          "Please provide all required fields",
       });
     }
 
    
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
+    const company = await Company.findOne({
+      companyEmail
+    });
+
+    if (!company) {
+      return res.status(404).json({
         success: false,
-        message: "User already exists with this email.",
+        message: "Company not found",
       });
     }
 
-    
-    const newUser = new User({
+    // Get tenant DB connection
+    const tenantDB = await getTenantConnection(
+      company.databaseName
+    );
+
+    // Create User model from tenant DB
+    const User = tenantDB.model(
+      "User",
+      UserSchema.schema
+    );
+
+    // Check existing user
+    const existingUser = await User.findOne({
+      email
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "User already exists with this email.",
+      });
+    }
+
+    // Create new user
+    const newUser = await User.create({
       name,
-      role,
       email,
       password,
+      role,
       profilePhoto: "",
     });
 
-    await newUser.save();
+    // Generate JWT
+    await generatejwt(
+      newUser._id,
+      company.databaseName,
+      res
+    );
 
     res.status(201).json({
       success: true,
       message: "User registered successfully!",
+      database: company.databaseName,
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -86,11 +137,18 @@ const registerUser = async (req, res) => {
         role: newUser.role,
       },
     });
+
   } catch (error) {
-    console.error("Error registering user:", error);
+
+    console.error(
+      "Error registering user:",
+      error
+    );
+
     res.status(500).json({
       success: false,
-      message: "Internal server error while registering user.",
+      message:
+        "Internal server error while registering user.",
     });
   }
 };
